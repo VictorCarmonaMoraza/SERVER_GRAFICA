@@ -2,45 +2,41 @@
 import { Router, Request, Response } from 'express';
 import Server from '../classes/server';
 import { usuariosConectados } from '../sockets/socket';
+import { GraficaData } from '../classes/grafica';
 
 const router = Router();
 
+const grafica = new GraficaData();
 
 
-router.get('/mensajes', ( req: Request, res: Response  ) => {
 
-    res.json({
-        ok: true,
-        mensaje: 'Todo esta bien!!'
-    });
+router.get('/grafica', (req: Request, res: Response) => {
 
+    res.json(
+        grafica.getDataGrafica())
 });
 
-router.post('/mensajes', ( req: Request, res: Response  ) => {
+router.post('/grafica', (req: Request, res: Response) => {
 
-    const cuerpo = req.body.cuerpo;
-    const de     = req.body.de;
+    const mes = req.body.mes;
+    const unidades = Number(req.body.unidades);
 
-    const payload = { cuerpo, de };
+
 
     const server = Server.instance;
-    server.io.emit('mensaje-nuevo', payload );
+    //&server.io.emit('mensaje-nuevo', payload);
 
-
-    res.json({
-        ok: true,
-        cuerpo,
-        de
-    });
+    grafica.incrementarValor(mes, unidades);
+    res.json(grafica.getDataGrafica());
 
 });
 
 
-router.post('/mensajes/:id', ( req: Request, res: Response  ) => {
+router.post('/mensajes/:id', (req: Request, res: Response) => {
 
     const cuerpo = req.body.cuerpo;
-    const de     = req.body.de;
-    const id     = req.params.id;
+    const de = req.body.de;
+    const id = req.params.id;
 
     const payload = {
         de,
@@ -50,7 +46,7 @@ router.post('/mensajes/:id', ( req: Request, res: Response  ) => {
 
     const server = Server.instance;
 
-    server.io.in( id ).emit( 'mensaje-privado', payload );
+    server.io.in(id).emit('mensaje-privado', payload);
 
 
     res.json({
@@ -64,13 +60,13 @@ router.post('/mensajes/:id', ( req: Request, res: Response  ) => {
 
 
 // Servicio para obtener todos los IDs de los usuarios
-router.get('/usuarios', (  req: Request, res: Response ) => {
+router.get('/usuarios', (req: Request, res: Response) => {
 
     const server = Server.instance;
 
-    server.io.clients( ( err: any, clientes: string[] ) => {
+    server.io.clients((err: any, clientes: string[]) => {
 
-        if ( err ) {
+        if (err) {
             return res.json({
                 ok: false,
                 err
@@ -89,7 +85,7 @@ router.get('/usuarios', (  req: Request, res: Response ) => {
 });
 
 // Obtener usuarios y sus nombres
-router.get('/usuarios/detalle', (  req: Request, res: Response ) => {
+router.get('/usuarios/detalle', (req: Request, res: Response) => {
 
 
     res.json({
@@ -97,7 +93,7 @@ router.get('/usuarios/detalle', (  req: Request, res: Response ) => {
         clientes: usuariosConectados.getLista()
     });
 
-    
+
 });
 
 
